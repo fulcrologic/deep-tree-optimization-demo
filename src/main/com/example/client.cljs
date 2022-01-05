@@ -7,7 +7,8 @@
     [com.fulcrologic.fulcro.mutations :as m]
     [taoensso.timbre :as log]
     [com.fulcrologic.fulcro.react.hooks :as hooks]
-    [com.fulcrologic.fulcro.algorithms.merge :as merge]))
+    [com.fulcrologic.fulcro.algorithms.merge :as merge]
+    [com.fulcrologic.fulcro.dom.events :as evt]))
 
 (defonce app (app/fulcro-app {}))
 
@@ -18,6 +19,9 @@
     []
     (mapv (fn [n]
             {:node/id       (next-node-id)
+             ;; If you open them ALL then the first frame is, of course, horrible, but the interactive is still tolerable
+             ;; with 15k nodes on-screen.
+             ;:ui/open?      true
              :node/content  (str "node" n "-" depth)
              :node/children (gen-tree (dec depth) branching)}) (range branching))))
 
@@ -28,17 +32,17 @@
                        :node/keys [id content children]} {:keys [depth]}]
   {:query (fn [] '[:ui/open? :node/id :node/content {:node/children ...}])
    :ident :node/id}
-  (log/info "Render" id "depth" depth)
   (dom/li {}
     (dom/a {:onClick #(m/toggle!! this :ui/open?)}
       (dom/input {:value    (or content "")
+                  :onClick  (fn [evt] (evt/stop-propagation! evt))
                   :onChange (fn [evt] (m/set-string!! this :node/content :event evt))})
       (cond
         open? (str " collapse")
         (seq children) (str " expand")))
     (when (and open? (seq children))
       (dom/ul {}
-        (map #(ui-deep-node % {:depth (inc depth)}) children)))))
+        (map #(ui-deep-node % {:depth (inc (or depth 4))}) children)))))
 
 (def ui-deep-node (comp/computed-factory DeepNode {:keyfn :node/id}))
 
@@ -57,12 +61,12 @@
            :node/content
            {:node/children 3}]
    :ident :node/id}
-  (log/info "Render " id "depth" depth)
   (if (> depth 2)
     (ui-deep-tree {:parent-id id} {:depth (inc depth)})
     (dom/li {}
       (dom/a {:onClick #(m/toggle!! this :ui/open?)}
         (dom/input {:value    (or content "")
+                    :onClick  (fn [evt] (evt/stop-propagation! evt))
                     :onChange (fn [evt] (m/set-string!! this :node/content :event evt))})
         (if open?
           (str " collapse")
@@ -97,7 +101,7 @@
   (merge/merge-component! app DeepNode
     {:node/id       1
      :node/content  "ROOT"
-     :node/children (gen-tree 6 5)}
+     :node/children (gen-tree 7 5)}
     :replace [:tree]))
 
 (defn init []
