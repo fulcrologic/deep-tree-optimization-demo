@@ -1,0 +1,9 @@
+{:paths   ["src/main" "resources"]
+
+ :deps    {com.fulcrologic/fulcro {:mvn/version "3.5.9"}
+           com.taoensso/timbre    {:mvn/version "5.1.2"}}
+
+ :aliases {:cljs {:extra-deps {org.clojure/clojurescript                       {:mvn/version "1.10.879"}
+                               thheller/shadow-cljs                            {:mvn/version "2.15.12"}
+                               com.google.javascript/closure-compiler-unshaded {:mvn/version "v20210505"}
+                               binaryage/devtools                              {:mvn/version "1.0.4"}}}}}
